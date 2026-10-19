@@ -397,13 +397,26 @@ label.chips { display: flex; grid-template-columns: none; border: 0; }
 @media (hover: hover) { .burger:hover .burger__traits span:nth-child(1) { width: 12px; left: 18px; } .burger:hover .burger__traits span:nth-child(2) { width: 18px; } }
 .burger[aria-expanded="true"] .burger__traits span:nth-child(1) { top: 21px; width: 18px; transform: rotate(45deg); }
 .burger[aria-expanded="true"] .burger__traits span:nth-child(2) { top: 21px; width: 18px; transform: rotate(-45deg); }
-@media (max-width: 899px) { .nav { display: none; } .burger { margin-left: auto; } }
+/* Le logo-bouton (téléphone) et le logo du menu : un bouton habillé en logo */
+.logo--menu, .menu__logo { border: 0; background: none; color: inherit; cursor: pointer; margin: 0; padding-inline: 0; }
+.logo--menu { display: none; }
+/* Téléphone : ni « Menu » ni traits ; le logo seul, centré, ouvre le menu, et le referme depuis la même place */
+@media (max-width: 899px) {
+  .nav, .burger, .header .logo:not(.logo--menu) { display: none; }
+  .logo--menu { display: block; margin-inline: auto; transform-origin: center; }
+}
 
 /* Menu plein écran */
 .menu { position: fixed; inset: 0; z-index: 60; background: var(--noir); color: var(--lait); --focus: var(--lait); display: flex; flex-direction: column; padding: 18px var(--gutter) 36px; clip-path: inset(0 0 100% 0); visibility: hidden; transition: clip-path .85s var(--lame), visibility 0s .85s; }
 .menu.is-open { clip-path: inset(0); visibility: visible; transition: clip-path .85s var(--lame), visibility 0s; }
 .menu__top { display: flex; align-items: center; height: 60px; }
 .menu__close { margin-left: auto; color: inherit; }
+/* Téléphone : le logo du menu se pose exactement à la place du logo de l'en-tête */
+@media (max-width: 899px) {
+  .menu { padding-top: 0; }
+  .menu__top { position: relative; justify-content: center; height: var(--header-h); }
+  .menu__close { position: absolute; right: 0; top: 50%; translate: 0 -50%; }
+}
 .menu nav { margin-top: auto; display: flex; flex-direction: column; }
 .menu nav a { display: flex; align-items: baseline; gap: 14px; overflow: hidden; font: 300 clamp(2.1rem, 8vw, 3rem)/1.12 var(--serif); letter-spacing: -.02em; text-decoration: none; }
 .menu nav a > span:last-child { display: inline-block; transform: translateY(110%); transition: transform 1s var(--bain); }
@@ -921,11 +934,21 @@ figcaption, .caption { font: 500 var(--fs-libelle)/1.4 var(--sans); color: var(-
 .maquette::before { content: ""; width: 7px; height: 7px; background: var(--lait-2); }
 
 /* Barre d'action sur téléphone */
+/* Retour en haut : un carré discret en bas à droite, au-dessus de la barre d'action au téléphone
+   (--barre : hauteur du bandeau « maquette », posée par les copies de consultation) */
+.haut { position: fixed; z-index: 41; right: max(var(--gutter), env(safe-area-inset-right, 0px)); bottom: calc(var(--barre, 0px) + max(20px, env(safe-area-inset-bottom, 0px)));
+  width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 2px; background: var(--encre); color: var(--creme); cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(238, 234, 227, .22), 0 6px 18px rgba(17, 16, 16, .18);
+  opacity: 0; visibility: hidden; transform: translateY(8px); transition: opacity .4s var(--souffle), transform .5s var(--papier), bottom .4s var(--papier), visibility 0s .4s; }
+.haut svg { width: 16px; height: 16px; rotate: -90deg; transition: translate .4s var(--papier); }
+.haut.is-visible { opacity: 1; visibility: visible; transform: none; transition: opacity .4s var(--souffle), transform .5s var(--papier), bottom .4s var(--papier), visibility 0s; }
+@media (hover: hover) { .haut:hover svg { translate: 0 -2px; } }
 .mobile-cta { display: none; }
 @media (max-width: 699px) {
   /* Barre fine au ras de l'écran, comme une barre d'outils : texte et petite pastille blanche */
   .mobile-cta { position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: 1fr 1fr; padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); background: var(--noir); border-top: 1px solid var(--filet-nuit); transform: translateY(105%); transition: transform .5s var(--sortie); }
   .mobile-cta.is-visible { transform: none; }
+  .mobile-cta.is-visible ~ .haut { bottom: calc(var(--barre, 0px) + 54px + env(safe-area-inset-bottom, 0px) + 12px); }
   .mobile-cta a, .mobile-cta span { height: 54px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 var(--gutter); text-decoration: none; font: 450 .9375rem/1 var(--sans); color: var(--lait); }
   .mobile-cta a + a { border-left: 1px solid var(--filet-nuit); }
   .mobile-cta .mc-past { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 2px; background: var(--blanc); color: var(--encre); transition: transform .3s var(--sortie); }

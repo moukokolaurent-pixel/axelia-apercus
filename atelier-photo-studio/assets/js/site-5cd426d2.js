@@ -43,6 +43,16 @@
     return gsap.fromTo(t, { "--m": 0 }, { "--m": 116, duration: duree || dureeEcriture(el), ease: E.plume, delay, onComplete: () => t.classList.remove("ecrit-en-cours") }); };
   const tiltOf = el => parseFloat(el.style.getPropertyValue("--tilt")) || 0;
 
+  /* ── Arrivée sur une page : toujours en haut ───────────────────────── */
+  // Sauf vers une ancre (#…) et au retour en arrière, où le navigateur retrouve la place qu'on avait quittée
+  const typeNav = (() => { try { const n = performance.getEntriesByType("navigation")[0]; return n ? n.type : "navigate"; } catch (e) { return "navigate"; } })();
+  const enHaut = typeNav !== "back_forward" && !location.hash;
+  if (enHaut) {
+    try { history.scrollRestoration = "manual"; } catch (e) {}
+    scrollTo(0, 0);
+    addEventListener("pagehide", () => { try { history.scrollRestoration = "auto"; } catch (e) {} });
+  }
+
   /* ── Défilement fluide ─────────────────────────────────────────────── */
   let lenis = null;
   if (anim && ST && window.Lenis) {
@@ -51,6 +61,7 @@
     lenis.on("scroll", ST.update);
     gsap.ticker.add(t => lenis.raf(t * 1000));
     gsap.ticker.lagSmoothing(0);
+    if (enHaut) lenis.scrollTo(0, { immediate: true, force: true });
   }
   if (ST) ST.config({ ignoreMobileResize: true });
   const velocity = () => (lenis ? lenis.velocity : 0);
@@ -63,6 +74,7 @@
   const header = $(".header");
   const mobileCta = $(".mobile-cta");
   const footer = $(".footer");
+  const haut = $(".haut");
   const darkSel = ".hero:not(.hero--studio), .hero--studio[data-fond='noir'], .cta, .section--night, .section--gris, .film, .footer, .bleed";
   let lastY = scrollY, ticking = false;
   const headerFrame = () => {
@@ -82,6 +94,7 @@
         lastY = y;
       }
     }
+    if (haut) haut.classList.toggle("is-visible", y > innerHeight * 1.2 && !document.body.style.overflow);
     if (mobileCta) {
       const nearFoot = footer && footer.getBoundingClientRect().top < innerHeight - 40;
       const typing = document.activeElement && document.activeElement.matches("input, textarea, select");
@@ -95,25 +108,41 @@
   document.addEventListener("focusin", requestHeader);
   headerFrame();
 
+  /* ── Retour en haut ────────────────────────────────────────────────── */
+  const remonter = () => {
+    if (lenis) lenis.scrollTo(0, { duration: 1.4 }); else scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
+    const logo = $$(".header .logo").find(l => l.offsetParent); // le logo visible : lien (ordinateur) ou bouton (téléphone)
+    if (logo) logo.focus({ preventScroll: true });
+  };
+  if (haut) haut.addEventListener("click", remonter);
+
   /* ── Menu plein écran ──────────────────────────────────────────────── */
-  const menu = $("#menu"), burger = $(".burger");
-  if (menu && burger) {
+  // Deux façons d'ouvrir : « Menu » (ordinateur) et le logo (téléphone) ; le logo du menu le referme
+  const menu = $("#menu"), ouvreurs = $$(".burger, .logo--menu");
+  if (menu && ouvreurs.length) {
+    let ouvreur = ouvreurs[0];
     const outside = () => [$("main"), $(".footer")].filter(Boolean);
+    const etat = o => ouvreurs.forEach(b => b.setAttribute("aria-expanded", String(o)));
     const close = () => {
-      menu.classList.remove("is-open"); burger.setAttribute("aria-expanded", "false"); menu.setAttribute("aria-hidden", "true");
-      outside().forEach(el => el.removeAttribute("inert")); lockScroll(false); burger.focus();
+      menu.classList.remove("is-open"); etat(false); menu.setAttribute("aria-hidden", "true");
+      outside().forEach(el => el.removeAttribute("inert")); lockScroll(false); ouvreur.focus();
     };
-    burger.addEventListener("click", () => {
-      menu.classList.add("is-open"); burger.setAttribute("aria-expanded", "true"); menu.setAttribute("aria-hidden", "false");
+    const open = e => {
+      ouvreur = e.currentTarget;
+      menu.classList.add("is-open"); etat(true); menu.setAttribute("aria-hidden", "false");
       outside().forEach(el => el.setAttribute("inert", "")); lockScroll(true); $(".menu__close", menu).focus();
-    });
+    };
+    ouvreurs.forEach(b => b.addEventListener("click", open));
     $(".menu__close", menu).addEventListener("click", close);
+    const logoMenu = $(".menu__logo", menu);
+    if (logoMenu) logoMenu.addEventListener("click", close);
     menu.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
     /* Le tirage de chaque page se développe au survol de son lien (ordinateur) */
     const apercu = $(".menu__apercu", menu), apImg = apercu && $("img", apercu);
     const liensApercu = $$("nav a[data-apercu]", menu);
     if (apercu && apImg) {
-      burger.addEventListener("click", () => liensApercu.forEach(a => { new Image().src = a.dataset.apercu; }), { once: true });
+      let precharge = false;
+      ouvreurs.forEach(b => b.addEventListener("click", () => { if (precharge) return; precharge = true; liensApercu.forEach(a => { new Image().src = a.dataset.apercu; }); }));
       const montrer = a => {
         if (apImg.getAttribute("src") === a.dataset.apercu) return;
         apercu.classList.add("is-latent");
@@ -143,7 +172,15 @@
       let url;
       try { url = new URL(href, location.href); } catch (err) { return; }
       if (url.origin !== location.origin) return;
-      if (url.pathname === location.pathname && url.hash) return; // même page : Lenis s'en charge
+      const memePage = url.pathname.replace(/index\.html$/, "") === location.pathname.replace(/index\.html$/, "");
+      if (memePage && url.hash) return; // même page, vers une ancre : Lenis s'en charge
+      if (memePage) { // la page où l'on est déjà : on ferme le menu et on remonte, sans recharger
+        e.preventDefault();
+        const m = $("#menu");
+        if (m && m.classList.contains("is-open")) $(".menu__close", m).click();
+        remonter();
+        return;
+      }
       e.preventDefault();
       const titre = titreDe(url);
       store.set("apm:nav", JSON.stringify({ t: Date.now(), titre }));
