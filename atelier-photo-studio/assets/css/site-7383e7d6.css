@@ -224,6 +224,8 @@ main .section--night:not(.hero) .eyebrow, main .section--gris .eyebrow { color: 
 .btn--s::before { clip-path: inset(6px 6px 6px calc(100% - 38px)); }
 .btn--s .btn__pastille { width: 32px; height: 32px; }
 .btn--plein { width: 100%; }
+/* Très petits écrans (320 px) : le bouton se resserre plutôt que de couper son texte */
+@media (max-width: 359px) { .btn { padding-left: 16px; gap: 10px; font-size: .875rem; } }
 /* Bouton clair : sur photo et sur fond sombre */
 .btn--clair, .hero .btn, .cta .btn, .film .btn, .section--night .btn, .section--gris .btn, .offer--mark .btn, .header--clair .nav .btn, .menu .btn {
   --fond: var(--blanc); --texte: var(--encre); --past: var(--encre); --fl: var(--blanc);
@@ -338,6 +340,11 @@ main .section--night:not(.hero) .eyebrow, main .section--gris .eyebrow { color: 
 .anchor-nav a[aria-current], .filters button[aria-pressed="true"], .tabs button[aria-selected="true"] { color: var(--encre); }
 .section--night .anchor-nav a, .section--night .filters button { color: var(--lait-2); }
 .section--night .anchor-nav a:hover, .section--night .filters button:hover, .section--night .filters button[aria-pressed="true"], .section--night .anchor-nav a[aria-current] { color: var(--lait); }
+@media (max-width: 599px) { .anchor-nav { column-gap: 18px; } .anchor-nav a { font-size: .875rem; } }
+/* Barres qui défilent sur le côté (téléphone) : un fondu au bord montre qu'elles continuent, au lieu d'un mot tranché */
+[data-suite="droite"] { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); }
+[data-suite="gauche"] { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 56px), transparent); }
+[data-suite="deux"] { -webkit-mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent); }
 .index__trait { position: absolute; left: 0; bottom: 6px; height: 1px; width: 0; background: currentColor; pointer-events: none; transition: transform .45s var(--sortie), width .45s var(--sortie); }
 html:not(.index-ok) .filters button[aria-pressed="true"], html:not(.index-ok) .tabs button[aria-selected="true"] { text-decoration: underline; text-underline-offset: 8px; }
 .index__n { font: 500 var(--fs-vue)/1 var(--sans); font-stretch: 75%; color: var(--encre-3); font-variant-numeric: tabular-nums; }
@@ -817,6 +824,8 @@ figcaption, .caption { font: 500 var(--fs-libelle)/1.4 var(--sans); color: var(-
 .filters-bar { position: sticky; top: var(--header-offset); z-index: 30; background: var(--noir); border-bottom: 1px solid var(--filet-nuit); margin-bottom: 8px; transition: top .6s var(--sortie); }
 .filters-bar .filters { min-height: 56px; align-items: center; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
 .filters-bar .filters::-webkit-scrollbar { display: none; }
+/* Téléphone : les filtres passent sur plusieurs lignes au lieu de filer hors de l'écran (on croyait le texte coupé) */
+@media (max-width: 599px) { .filters-bar .filters { flex-wrap: wrap; overflow-x: visible; gap: 0 20px; padding-block: 6px; } }
 .wall { --gap: 8px; display: flex; gap: var(--gap); align-items: flex-start; transition: opacity .25s ease-in; }
 .wall:not(.is-ready) { display: block; columns: 4 240px; column-gap: var(--gap); }
 .wall:not(.is-ready) figure { break-inside: avoid; margin: 0 0 var(--gap); }
@@ -843,10 +852,13 @@ figcaption, .caption { font: 500 var(--fs-libelle)/1.4 var(--sans); color: var(-
 
 /* ── Formulaires ──────────────────────────────────────────────────────── */
 .tabs { margin-bottom: 40px; border-bottom: 1px solid var(--filet); }
+@media (max-width: 599px) { .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; } .tabs button { white-space: normal; text-align: left; } }
 .form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 32px; }
 .form .full { grid-column: 1 / -1; }
 @media (max-width: 699px) { .form { grid-template-columns: minmax(0, 1fr); } }
 .field label, .field legend { display: block; font: 500 var(--fs-libelle)/1.3 var(--sans); color: var(--encre-2); margin-bottom: 10px; }
+/* Les choix (ronds, cases) : la case et son texte sur la même ligne — la règle ci-dessus les empilait */
+.field .chips label, .field label.chips { display: flex; align-items: center; gap: 14px; margin-bottom: 0; font: 400 .9375rem/1.35 var(--sans); color: var(--encre); }
 .field { position: relative; }
 .field input:not([type="radio"]):not([type="checkbox"]), .field select, .field textarea {
   width: 100%; font: inherit; color: var(--encre); background: transparent;

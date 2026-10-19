@@ -752,7 +752,8 @@
     const act = nav.querySelector('[aria-current="true"], [aria-pressed="true"], [aria-selected="true"]');
     if (!act) { t.style.width = "0px"; return; }
     const nr = nav.getBoundingClientRect(), ar = act.getBoundingClientRect();
-    t.style.width = ar.width + "px"; t.style.transform = `translateX(${ar.left - nr.left + nav.scrollLeft}px)`;
+    // sur plusieurs lignes, le trait descend sous la bonne ligne (il restait sur la dernière)
+    t.style.width = ar.width + "px"; t.style.transform = `translate(${ar.left - nr.left + nav.scrollLeft}px, ${Math.round(ar.bottom - nr.bottom)}px)`;
     if (nav.scrollWidth > nav.clientWidth + 2) nav.scrollTo({ left: act.offsetLeft - (nav.clientWidth - act.offsetWidth) / 2, behavior: reduced ? "auto" : "smooth" });
   };
   $$(".anchor-nav, .filters, .tabs").forEach(nav => {
@@ -762,6 +763,16 @@
   });
   html.classList.add("index-ok");
   addEventListener("resize", () => traits.forEach(placeTrait));
+  // Fondu au bord des barres qui défilent sur le côté : seulement là où il reste quelque chose à voir
+  const suite = nav => {
+    const max = nav.scrollWidth - nav.clientWidth;
+    if (max < 4) { nav.removeAttribute("data-suite"); return; }
+    const g = nav.scrollLeft > 4, d = nav.scrollLeft < max - 4;
+    if (g && d) nav.dataset.suite = "deux"; else if (d) nav.dataset.suite = "droite"; else if (g) nav.dataset.suite = "gauche"; else nav.removeAttribute("data-suite");
+  };
+  $$(".anchor-nav, .filters").forEach(nav => { suite(nav); nav.addEventListener("scroll", () => suite(nav), { passive: true }); });
+  addEventListener("resize", () => $$(".anchor-nav, .filters").forEach(suite));
+  fontsReady.then(() => $$(".anchor-nav, .filters").forEach(suite));
   fontsReady.then(() => traits.forEach(placeTrait));
   /* Suivi de la section en cours dans les index d'ancres */
   $$("nav[data-suivi]").forEach(nav => {
