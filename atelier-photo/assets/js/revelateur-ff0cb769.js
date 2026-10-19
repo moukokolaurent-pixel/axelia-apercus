@@ -127,7 +127,9 @@ void main(){
 
     let last = performance.now();
     const tick = () => {
-      if (!st.visible || st.lost) return;
+      // Pendant un développement, on dessine quoi qu'en dise l'observateur : le cadre de l'accueil part fermé
+      // (zéro pixel de haut), le navigateur le déclare alors invisible et ne le signale pas toujours à sa réouverture
+      if ((!st.visible && !st.anim) || st.lost) return;
       const now = performance.now(), dt = Math.min(.05, (now - last) / 1000); last = now;
       const target = interactive && opts.vitesse ? Math.max(-1, Math.min(1, opts.vitesse() / 30)) : 0;
       st.vel += (target - st.vel) * (1 - Math.exp(-dt * 6));
@@ -169,7 +171,7 @@ void main(){
       develop(duration = 2.4, delay = 0, ease = "power2.out") {
         return new Promise(resolve => {
           if (!window.gsap) { st.p = 1; st.dirty = true; return resolve(); }
-          st.anim = true;
+          st.anim = true; last = performance.now();
           window.gsap.to(st, { p: 1, duration, delay, ease, onUpdate: () => { st.dirty = true; }, onComplete: () => { st.anim = false; resolve(); } });
         });
       },
